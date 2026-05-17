@@ -1,25 +1,27 @@
 import { NextResponse } from "next/server";
-import { getOrCreateUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
+import { handleApiError } from "@/lib/api/errors";
+import { parseJson } from "@/lib/api/request";
+import { createChatSession, listChatSessions } from "@/lib/services/session-service";
+import { createSessionSchema } from "@/lib/validators";
 
 export async function GET() {
-  const user = await getOrCreateUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const user = await requireUser();
+    const sessions = await listChatSessions(user.id);
+    return NextResponse.json({ sessions });
+  } catch (error) {
+    return handleApiError(error);
   }
+}
 
-  const sessions = await prisma.session.findMany({
-    where: { userId: user.id },
-    include: {
-      messages: {
-        orderBy: { createdAt: "asc" },
-        take: 8
-      }
-    },
-    orderBy: { updatedAt: "desc" },
-    take: 20
-  });
-
-  return NextResponse.json({ sessions });
+export async function POST(request: Request) {
+  try {
+    const user = await requireUser();
+    const input = await parseJson(request, createSessionSchema);
+    const session = await createChatSession(user.id, input.title);
+    return NextResponse.json({ session }, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

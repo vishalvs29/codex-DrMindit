@@ -27,10 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" className="dark">
-        <body className="font-sans antialiased">{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" className="dark">
+      <body className="font-sans antialiased">
+        <ClerkProvider>{children}</ClerkProvider>
+      </body>
+    </html>
   );
 }

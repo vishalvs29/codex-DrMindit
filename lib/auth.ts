@@ -1,13 +1,16 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { unauthorized } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 
 export async function getOrCreateUser() {
-  const clerkUser = await currentUser();
+  const { userId } = await auth();
 
-  if (!clerkUser) {
+  if (!userId) {
     return null;
   }
 
+  const client = await clerkClient();
+  const clerkUser = await client.users.getUser(userId);
   const email = clerkUser.emailAddresses[0]?.emailAddress;
 
   if (!email) {
@@ -15,9 +18,9 @@ export async function getOrCreateUser() {
   }
 
   return prisma.user.upsert({
-    where: { clerkId: clerkUser.id },
+    where: { clerkId: userId },
     create: {
-      clerkId: clerkUser.id,
+      clerkId: userId,
       email,
       name: clerkUser.fullName,
       imageUrl: clerkUser.imageUrl
@@ -28,4 +31,14 @@ export async function getOrCreateUser() {
       imageUrl: clerkUser.imageUrl
     }
   });
+}
+
+export async function requireUser() {
+  const user = await getOrCreateUser();
+
+  if (!user) {
+    throw unauthorized();
+  }
+
+  return user;
 }

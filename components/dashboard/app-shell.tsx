@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <button aria-label="Notifications" className="grid h-10 w-10 place-items-center rounded-2xl bg-white/5 text-slate-300">
                 <Bell className="h-5 w-5" />
               </button>
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             </div>
           </div>
         </header>

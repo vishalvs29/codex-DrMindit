@@ -31,12 +31,15 @@ model User {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   organizationId  String?
-  organization    Organization?   @relation(fields: [organizationId], references: [id])
-  sessions        Session[]
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  chatSessions    ChatSession[]
   moodEntries     MoodEntry[]
   audioSessions   AudioSession[]
   programProgress ProgramProgress[]
   insights        Insight[]
+
+  @@index([organizationId])
+  @@index([email])
 }
 
 model Organization {
@@ -46,33 +49,41 @@ model Organization {
   seatCount   Int      @default(0)
   privacyMode Boolean  @default(true)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   users       User[]
+
+  @@index([type])
 }
 
-model Session {
-  id        String    @id @default(cuid())
-  userId    String
-  title     String
-  summary   String?
-  riskLevel RiskLevel @default(LOW)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  Message[]
+model ChatSession {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  summary     String?
+  riskLevel   RiskLevel @default(LOW)
+  lastMood    String?
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
 
   @@index([userId, updatedAt])
+  @@index([userId, archivedAt])
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  sessionId String
-  role      Role
-  content   String
-  metadata  Json?
-  createdAt DateTime @default(now())
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  chatSessionId String
+  role          Role
+  content       String
+  metadata      Json?
+  tokenCount    Int?
+  createdAt     DateTime    @default(now())
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
 
-  @@index([sessionId, createdAt])
+  @@index([chatSessionId, createdAt])
+  @@index([role])
 }
 
 model MoodEntry {
@@ -85,9 +96,11 @@ model MoodEntry {
   journal   String?
   tags      String[]
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([mood])
 }
 
 model Program {
@@ -98,7 +111,11 @@ model Program {
   duration    Int
   category    String
   lessons     Json
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   progress    ProgramProgress[]
+
+  @@index([category])
 }
 
 model ProgramProgress {
@@ -107,11 +124,13 @@ model ProgramProgress {
   programId String
   day       Int      @default(1)
   completed Boolean  @default(false)
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   @@unique([userId, programId])
+  @@index([userId, completed])
 }
 
 model AudioSession {
@@ -122,7 +141,11 @@ model AudioSession {
   duration  Int
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([category])
 }
 
 model Insight {
@@ -133,5 +156,9 @@ model Insight {
   score     Int?
   source    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([source])
 }

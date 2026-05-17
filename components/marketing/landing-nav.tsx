@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,20 +20,22 @@ export function LandingNav() {
           <Link href="#pricing" className="hover:text-white">Pricing</Link>
         </div>
         <div className="flex items-center gap-3">
-          <SignedOut>
-            <Link href="/sign-in" className="hidden text-sm text-slate-300 hover:text-white sm:block">
-              Log in
-            </Link>
-            <Link href="/sign-up">
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="hidden text-sm text-slate-300 transition hover:text-white sm:block">
+                Log in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
               <Button size="sm">Start free</Button>
-            </Link>
-          </SignedOut>
-          <SignedIn>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
             <Link href="/dashboard">
               <Button size="sm" variant="secondary">Dashboard</Button>
             </Link>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+            <UserButton />
+          </Show>
         </div>
       </nav>
     </header>

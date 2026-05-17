@@ -13,3 +13,23 @@ export const chatRequestSchema = z.object({
   sessionId: z.string().optional(),
   message: z.string().min(1).max(5000)
 });
+
+export const createSessionSchema = z.object({
+  title: z.string().min(1).max(120).optional()
+});
+
+export const updateSessionSchema = z.object({
+  title: z.string().min(1).max(120).optional(),
+  archived: z.boolean().optional()
+});
+
+export const messageQuerySchema = z.object({
+  sessionId: z.string().min(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().optional()
+});
+
+export const messagesPostSchema = z.object({
+  sessionId: z.string().min(1),
+  message: z.string().min(1).max(5000)
+});

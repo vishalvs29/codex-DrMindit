@@ -1,12 +1,27 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MessageSquare, Plus, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 
 type ChatMessage = {
   role: "user" | "assistant";
+  content: string;
+};
+
+type ChatSession = {
+  id: string;
+  title: string;
+  updatedAt: string;
+  _count?: {
+    messages: number;
+  };
+};
+
+type PersistedMessage = {
+  id: string;
+  role: "USER" | "ASSISTANT" | "SYSTEM";
   content: string;
 };
 
@@ -20,10 +35,49 @@ export function ChatPanel() {
   ]);
   const [message, setMessage] = useState("");
   const [sessionId, setSessionId] = useState<string>();
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const canSend = useMemo(() => message.trim().length > 0 && !isStreaming, [message, isStreaming]);
+
+  async function loadSessions() {
+    const response = await fetch("/api/sessions");
+    if (!response.ok) return;
+    const data = (await response.json()) as { sessions: ChatSession[] };
+    setSessions(data.sessions);
+  }
+
+  async function loadMessages(nextSessionId: string) {
+    const response = await fetch(`/api/sessions/${nextSessionId}/messages`);
+    if (!response.ok) return;
+
+    const data = (await response.json()) as { messages: PersistedMessage[] };
+    setSessionId(nextSessionId);
+    setMessages(
+      data.messages
+        .filter((item) => item.role !== "SYSTEM")
+        .map((item) => ({
+          role: item.role === "ASSISTANT" ? "assistant" : "user",
+          content: item.content
+        }))
+    );
+  }
+
+  function startNewSession() {
+    setSessionId(undefined);
+    setMessages([
+      {
+        role: "assistant",
+        content:
+          "Welcome back. I am here with you. What feels most important to talk through right now?"
+      }
+    ]);
+  }
+
+  useEffect(() => {
+    void loadSessions();
+  }, []);
 
   async function sendMessage() {
     const content = message.trim();
@@ -76,12 +130,34 @@ export function ChatPanel() {
       });
     } finally {
       setIsStreaming(false);
+      void loadSessions();
       inputRef.current?.focus();
     }
   }
 
   return (
-    <div className="mx-auto grid h-[calc(100vh-6rem)] max-w-5xl grid-rows-[1fr_auto] gap-4 px-4 py-5 sm:px-6 lg:px-8">
+    <div className="mx-auto grid h-[calc(100vh-6rem)] max-w-7xl grid-rows-[auto_1fr_auto] gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[280px_1fr] lg:grid-rows-[1fr_auto] lg:px-8">
+      <GlassCard className="hide-scrollbar overflow-x-auto p-3 lg:row-span-2 lg:overflow-y-auto">
+        <div className="flex gap-2 lg:block lg:space-y-2">
+          <Button size="sm" variant="secondary" className="shrink-0 lg:w-full" onClick={startNewSession}>
+            <Plus className="h-4 w-4" /> New
+          </Button>
+          {sessions.map((session) => (
+            <button
+              key={session.id}
+              onClick={() => void loadMessages(session.id)}
+              className={`flex min-w-56 items-center gap-3 rounded-2xl border px-3 py-2 text-left text-sm transition lg:w-full ${
+                session.id === sessionId
+                  ? "border-cyanGlow bg-cyanGlow/10 text-white"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
+              }`}
+            >
+              <MessageSquare className="h-4 w-4 shrink-0 text-cyanGlow" />
+              <span className="truncate">{session.title}</span>
+            </button>
+          ))}
+        </div>
+      </GlassCard>
       <GlassCard className="hide-scrollbar overflow-y-auto p-4 sm:p-6">
         <div className="mx-auto max-w-3xl space-y-4">
           {messages.map((item, index) => (
