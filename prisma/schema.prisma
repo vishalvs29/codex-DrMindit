@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  ELEVATED
+  CRISIS
+}
+
+model User {
+  id              String          @id @default(cuid())
+  clerkId         String          @unique
+  email           String          @unique
+  name            String?
+  imageUrl        String?
+  anonymousMode   Boolean         @default(false)
+  preferredTone   String          @default("calm")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  organizationId  String?
+  organization    Organization?   @relation(fields: [organizationId], references: [id])
+  sessions        Session[]
+  moodEntries     MoodEntry[]
+  audioSessions   AudioSession[]
+  programProgress ProgramProgress[]
+  insights        Insight[]
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  seatCount   Int      @default(0)
+  privacyMode Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  users       User[]
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  summary   String?
+  riskLevel RiskLevel @default(LOW)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([userId, updatedAt])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      Role
+  content   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model MoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  mood      String
+  score     Int
+  sleep     Int?
+  stress    Int?
+  journal   String?
+  tags      String[]
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Program {
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  title       String
+  description String
+  duration    Int
+  category    String
+  lessons     Json
+  progress    ProgramProgress[]
+}
+
+model ProgramProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  programId String
+  day       Int      @default(1)
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, programId])
+}
+
+model AudioSession {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  category  String
+  duration  Int
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Insight {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  score     Int?
+  source    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
