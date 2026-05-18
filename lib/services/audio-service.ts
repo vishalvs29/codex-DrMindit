@@ -1,15 +1,12 @@
 import { Prisma } from "@prisma/client";
 import { notFound } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
-import { ensureWellnessCatalog } from "@/lib/services/catalog-service";
 
 const trackInclude = {
   category: true
 } satisfies Prisma.AudioTrackInclude;
 
 export async function listAudioTracks(userId: string) {
-  await ensureWellnessCatalog();
-
   const [categories, tracks, recent] = await Promise.all([
     prisma.audioCategory.findMany({ orderBy: { name: "asc" } }),
     prisma.audioTrack.findMany({
@@ -41,8 +38,6 @@ export async function listAudioTracks(userId: string) {
 }
 
 export async function getAudioTrack(userId: string, slugOrId: string) {
-  await ensureWellnessCatalog();
-
   const track = await prisma.audioTrack.findFirst({
     where: {
       isPublished: true,

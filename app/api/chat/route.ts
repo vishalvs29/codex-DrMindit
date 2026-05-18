@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    assertRateLimit(`chat:${user.id}`, 20, 60_000);
+    await assertRateLimit(`chat:${user.id}`, 20, 60_000);
     const input = await parseJson(request, chatRequestSchema);
 
     const { sessionId, stream } = await createChatCompletionStream({

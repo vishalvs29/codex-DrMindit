@@ -53,9 +53,18 @@ NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
 NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
 OPENAI_API_KEY="sk-..."
 OPENAI_MODEL="gpt-4o-mini"
+UPSTASH_REDIS_REST_URL="https://us1-xxxx.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="01234567-89ab-cdef-0123-456789abcdef"
+RATE_LIMITER_BACKEND="redis"
 ```
 
-4. Generate Prisma client and migrate:
+6. Run stability checks:
+
+```bash
+npm run test:stability
+```
+
+7. Generate Prisma client and migrate:
 
 ```bash
 npm run prisma:generate

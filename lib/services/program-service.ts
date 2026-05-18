@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { notFound } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
-import { ensureWellnessCatalog } from "@/lib/services/catalog-service";
 
 const programInclude = {
   days: {
@@ -25,8 +24,6 @@ function currentDayFromTasks(program: Prisma.ProgramGetPayload<{ include: typeof
 }
 
 export async function listPrograms(userId: string) {
-  await ensureWellnessCatalog();
-
   const programs = await prisma.program.findMany({
     include: {
       ...programInclude,
@@ -46,8 +43,6 @@ export async function listPrograms(userId: string) {
 }
 
 export async function getProgramBySlug(userId: string, slug: string) {
-  await ensureWellnessCatalog();
-
   const program = await prisma.program.findUnique({
     where: { slug },
     include: {
@@ -81,8 +76,6 @@ export async function updateProgramTaskProgress({
   taskId: string;
   completed: boolean;
 }) {
-  await ensureWellnessCatalog();
-
   const program = await prisma.program.findFirst({
     where: programId ? { id: programId } : { slug },
     include: programInclude
