@@ -16,6 +16,8 @@ const isProtectedRoute = createRouteMatcher([
   "/api/sessions(.*)",
   "/api/insights(.*)",
   "/api/dashboard(.*)",
+  "/api/programs(.*)",
+  "/api/audio(.*)",
   "/api/auth/sync(.*)"
 ]);
 

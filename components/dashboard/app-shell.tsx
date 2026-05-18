@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { BrainCircuit, Bell, Menu } from "lucide-react";
+import { AudioPlayerProvider } from "@/components/audio/audio-player";
 import { navItems } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
+    <AudioPlayerProvider>
     <div className="min-h-screen bg-aurora-grid text-white">
       <aside className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-ink/80 px-3 py-2 backdrop-blur-2xl lg:bottom-auto lg:right-auto lg:top-0 lg:h-screen lg:w-72 lg:border-r lg:border-t-0 lg:p-5">
         <div className="mb-8 hidden items-center gap-3 lg:flex">
@@ -63,5 +65,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     </div>
+    </AudioPlayerProvider>
   );
 }

@@ -1,6 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-sans",
+  subsets: ["latin"]
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"]
+});
 
 export const metadata: Metadata = {
   title: "DrMindit | AI mental wellness platform",
@@ -28,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="font-sans antialiased">
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ClerkProvider>{children}</ClerkProvider>
       </body>
     </html>

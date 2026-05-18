@@ -35,7 +35,9 @@ model User {
   chatSessions    ChatSession[]
   moodEntries     MoodEntry[]
   audioSessions   AudioSession[]
-  programProgress ProgramProgress[]
+  audioProgress   UserAudioProgress[]
+  favoriteTracks  FavoriteTrack[]
+  programProgress UserProgramProgress[]
   insights        Insight[]
 
   @@index([organizationId])
@@ -104,48 +106,149 @@ model MoodEntry {
 }
 
 model Program {
-  id          String            @id @default(cuid())
-  slug        String            @unique
+  id          String                @id @default(cuid())
+  slug        String                @unique
   title       String
   description String
   duration    Int
   category    String
-  lessons     Json
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  progress    ProgramProgress[]
+  accent      String                @default("from-cyanGlow to-mint")
+  benefits    String[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  days        ProgramDay[]
+  progress    UserProgramProgress[]
 
   @@index([category])
 }
 
-model ProgramProgress {
-  id        String   @id @default(cuid())
-  userId    String
-  programId String
-  day       Int      @default(1)
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+model ProgramDay {
+  id          String        @id @default(cuid())
+  programId   String
+  dayNumber   Int
+  title       String
+  description String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  program     Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  tasks       ProgramTask[]
+
+  @@unique([programId, dayNumber])
+  @@index([programId, dayNumber])
+}
+
+model ProgramTask {
+  id              String   @id @default(cuid())
+  programDayId    String
+  title           String
+  description     String
+  durationMinutes Int      @default(5)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  programDay      ProgramDay @relation(fields: [programDayId], references: [id], onDelete: Cascade)
+
+  @@unique([programDayId, sortOrder])
+  @@index([programDayId, sortOrder])
+}
+
+model UserProgramProgress {
+  id                   String    @id @default(cuid())
+  userId               String
+  programId            String
+  startedAt            DateTime  @default(now())
+  completedAt          DateTime?
+  completionPercentage Int       @default(0)
+  completedTaskIds     String[]
+  currentDay           Int       @default(1)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program              Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   @@unique([userId, programId])
-  @@index([userId, completed])
+  @@index([userId, completedAt])
+  @@index([programId])
+}
+
+model AudioCategory {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  description String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tracks      AudioTrack[]
+}
+
+model AudioTrack {
+  id          String              @id @default(cuid())
+  categoryId  String
+  slug        String              @unique
+  title       String
+  description String
+  duration    Int
+  audioUrl    String
+  imageGradient String
+  isPublished Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  category    AudioCategory       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  progress    UserAudioProgress[]
+  favorites   FavoriteTrack[]
+  sessions    AudioSession[]
+
+  @@index([categoryId])
+  @@index([isPublished])
 }
 
 model AudioSession {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  category  String
-  duration  Int
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String      @id @default(cuid())
+  userId           String
+  audioTrackId     String?
+  title            String
+  category         String
+  duration         Int
+  listenedSeconds  Int         @default(0)
+  completed        Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audioTrack       AudioTrack? @relation(fields: [audioTrackId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  @@index([audioTrackId])
   @@index([category])
+}
+
+model UserAudioProgress {
+  id               String     @id @default(cuid())
+  userId           String
+  audioTrackId     String
+  positionSeconds  Int        @default(0)
+  listeningSeconds Int        @default(0)
+  completed        Boolean    @default(false)
+  lastPlayedAt     DateTime   @default(now())
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audioTrack       AudioTrack @relation(fields: [audioTrackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, audioTrackId])
+  @@index([userId, lastPlayedAt])
+  @@index([audioTrackId])
+}
+
+model FavoriteTrack {
+  id           String     @id @default(cuid())
+  userId       String
+  audioTrackId String
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audioTrack   AudioTrack @relation(fields: [audioTrackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, audioTrackId])
+  @@index([userId, createdAt])
 }
 
 model Insight {

@@ -42,7 +42,7 @@ export async function getDashboardAnalytics(userId: string) {
       orderBy: { createdAt: "desc" },
       take: 8
     }),
-    prisma.programProgress.findMany({
+    prisma.userProgramProgress.findMany({
       where: { userId },
       include: { program: true },
       orderBy: { updatedAt: "desc" },
@@ -70,9 +70,10 @@ export async function getDashboardAnalytics(userId: string) {
     programs: programProgress.map((progress) => ({
       id: progress.id,
       title: progress.program.title,
-      day: progress.day,
+      day: progress.currentDay,
       duration: progress.program.duration,
-      completed: progress.completed
+      completed: Boolean(progress.completedAt),
+      completionPercentage: progress.completionPercentage
     }))
   };
 }
