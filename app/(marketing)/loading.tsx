@@ -1,3 +1,4 @@
+"use client";
 export default function Loading() {
   return (
     <main className="min-h-screen bg-aurora-grid px-4 pt-28">

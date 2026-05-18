@@ -39,6 +39,7 @@ model User {
   favoriteTracks  FavoriteTrack[]
   programProgress UserProgramProgress[]
   insights        Insight[]
+  subscription    Subscription?
 
   @@index([organizationId])
   @@index([email])
@@ -264,4 +265,22 @@ model Insight {
 
   @@index([userId, createdAt])
   @@index([source])
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  clerkId              String   @unique
+  stripeCustomerId     String   @unique
+  stripeSubscriptionId String   @unique
+  status               String
+  priceId              String?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
 }

@@ -1,6 +1,6 @@
-import { runRateLimitTests } from "./rate-limit.test.ts";
-import { runPrismaSingletonTests } from "./prisma-singleton.test.ts";
-import { runSeedTests } from "./seed.test.ts";
+import { runRateLimitTests } from "./rate-limit.test";
+import { runPrismaSingletonTests } from "./prisma-singleton.test";
+import { runSeedTests } from "./seed.test";
 
 async function main() {
   await runRateLimitTests();
