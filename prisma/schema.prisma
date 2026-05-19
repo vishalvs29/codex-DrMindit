@@ -20,6 +20,18 @@ enum RiskLevel {
   CRISIS
 }
 
+enum PlanTier {
+  FREE
+  PREMIUM
+  ORGANIZATION
+}
+
+enum AccessTier {
+  FREE
+  PREMIUM
+  ORGANIZATION
+}
+
 model User {
   id              String          @id @default(cuid())
   clerkId         String          @unique
@@ -28,6 +40,7 @@ model User {
   imageUrl        String?
   anonymousMode   Boolean         @default(false)
   preferredTone   String          @default("calm")
+  plan            PlanTier        @default(FREE)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   organizationId  String?
@@ -40,6 +53,8 @@ model User {
   programProgress UserProgramProgress[]
   insights        Insight[]
   subscription    Subscription?
+  billingHistory  BillingHistory[]
+  usageEntries    UsageTracking[]
 
   @@index([organizationId])
   @@index([email])
@@ -183,24 +198,29 @@ model AudioCategory {
 }
 
 model AudioTrack {
-  id          String              @id @default(cuid())
-  categoryId  String
-  slug        String              @unique
-  title       String
-  description String
-  duration    Int
-  audioUrl    String
+  id            String              @id @default(cuid())
+  categoryId    String
+  slug          String              @unique
+  title         String
+  description   String
+  duration      Int
+  audioUrl      String
+  thumbnailUrl  String?
+  narrator      String?
+  tags          String[]            @default([])
+  accessTier    AccessTier          @default(FREE)
   imageGradient String
-  isPublished Boolean             @default(true)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  category    AudioCategory       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  progress    UserAudioProgress[]
-  favorites   FavoriteTrack[]
-  sessions    AudioSession[]
+  isPublished   Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  category      AudioCategory       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  progress      UserAudioProgress[]
+  favorites     FavoriteTrack[]
+  sessions      AudioSession[]
 
   @@index([categoryId])
   @@index([isPublished])
+  @@index([accessTier])
 }
 
 model AudioSession {
@@ -268,19 +288,63 @@ model Insight {
 }
 
 model Subscription {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  clerkId              String   @unique
-  stripeCustomerId     String   @unique
-  stripeSubscriptionId String   @unique
+  id                   String           @id @default(cuid())
+  userId               String           @unique
+  clerkId              String           @unique
+  stripeCustomerId     String           @unique
+  stripeSubscriptionId String           @unique
   status               String
+  tier                 PlanTier         @default(PREMIUM)
   priceId              String?
+  currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billingHistory       BillingHistory[]
+  usageEntries         UsageTracking[]
 
   @@index([status])
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
+}
+
+model BillingHistory {
+  id                   String       @id @default(cuid())
+  userId               String
+  subscriptionId       String?
+  stripeInvoiceId      String?      @unique
+  stripePaymentIntent  String?      @unique
+  amountCents          Int
+  currency             String
+  status               String
+  eventType            String
+  description          String?
+  metadata             Json?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription         Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([stripeInvoiceId])
+}
+
+model UsageTracking {
+  id             String       @id @default(cuid())
+  userId         String
+  subscriptionId String?
+  feature        String
+  quantity       Int          @default(1)
+  periodStart    DateTime
+  periodEnd      DateTime
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([feature])
+  @@index([periodStart])
 }

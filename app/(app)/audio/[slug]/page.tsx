@@ -1,18 +1,10 @@
-import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
-import { getAudioTrack } from "@/lib/services/audio-service";
-import { AudioDetail } from "@/components/audio/audio-detail";
+import { redirect } from "next/navigation";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
 export default async function AudioDetailPage({ params }: PageProps) {
-  const user = await requireUser();
   const { slug } = await params;
-  const track = await getAudioTrack(user.id, slug).catch(() => null);
-
-  if (!track) notFound();
-
-  return <AudioDetail track={track} />;
+  redirect(`/sessions/${slug}`);
 }

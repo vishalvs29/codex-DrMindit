@@ -46,7 +46,7 @@ export default async function DashboardPage() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href="/chat"><Button>Talk to DrMindit</Button></Link>
-                <Link href="/audio"><Button variant="secondary">Sleep now</Button></Link>
+                <Link href="/sessions"><Button variant="secondary">Sleep now</Button></Link>
               </div>
             </div>
           </div>
@@ -70,7 +70,7 @@ export default async function DashboardPage() {
       </div>
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={Activity} label="Mood continuum" value={`${dashboard.moodDelta >= 0 ? "+" : ""}${dashboard.moodDelta}`} detail={`${dashboard.weeklyMoodEntries} check-ins saved this week.`} />
-        <MetricCard icon={Moon} label="Practice minutes" value={`${dashboard.completedAudioMinutes}`} detail="Completed audio therapy minutes this month." />
+        <MetricCard icon={Moon} label="Practice minutes" value={`${dashboard.completedAudioMinutes}`} detail="Completed session minutes this month." />
         <MetricCard icon={Sparkles} label="AI sessions" value={`${dashboard.sessionCount}`} detail={`${dashboard.messageCount} persisted messages across conversations.`} />
         <MetricCard icon={CalendarHeart} label="Current streak" value={`${dashboard.streak}`} detail="Consecutive daily mood check-ins." />
       </div>

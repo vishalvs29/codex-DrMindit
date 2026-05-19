@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { BrainCircuit, Bell, Menu } from "lucide-react";
-import { AudioPlayerProvider } from "@/components/audio/audio-player";
+import { AudioPlayerProvider } from "@/components/sessions/audio-player";
 import { navItems } from "@/lib/data";
 import { cn } from "@/lib/utils";
 

@@ -1,5 +1,5 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { unauthorized } from "@/lib/api/errors";
+import { unauthorized, forbidden } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
 
 export async function getOrCreateUser() {
@@ -38,6 +38,16 @@ export async function requireUser() {
 
   if (!user) {
     throw unauthorized();
+  }
+
+  return user;
+}
+
+export async function requirePremiumUser() {
+  const user = await requireUser();
+
+  if (!user.plan || user.plan === "FREE") {
+    throw forbidden("Upgrade required to access this content.");
   }
 
   return user;

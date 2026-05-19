@@ -49,7 +49,7 @@ export const programCatalog = [
       `Sleep practice ${index + 1}`,
       [
         "Design a landing routine for the final hour of the day.",
-        "Use audio and breath to slow physiological arousal.",
+        "Use sessions and breath to slow physiological arousal.",
         "Offload unfinished thoughts into a tomorrow list."
       ][index % 3]
     ])
@@ -113,66 +113,82 @@ export const audioCategoryCatalog = [
 
 export const audioTrackCatalog = [
   {
-    slug: "deep-blue-breathing",
-    title: "Deep Blue Breathing",
-    categorySlug: "anxiety-relief",
-    duration: 720,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    imageGradient: "linear-gradient(135deg,#2563eb,#06b6d4)",
-    description: "A paced breath session for lowering activation and returning to the present."
-  },
-  {
     slug: "morning-grounding",
     title: "Morning Grounding",
     categorySlug: "meditation",
-    duration: 480,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    duration: 240,
+    audioPath: "morning-grounding.wav",
+    thumbnailPath: "morning-grounding.svg",
     imageGradient: "linear-gradient(135deg,#0f766e,#22c55e)",
+    narrator: "Sage Oak",
+    tags: ["meditation", "morning", "presence"],
+    accessTier: "FREE",
     description: "A gentle orientation practice to begin the day with clarity."
   },
   {
     slug: "delta-sleep-harbor",
     title: "Delta Sleep Harbor",
     categorySlug: "sleep-stories",
-    duration: 1860,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    duration: 300,
+    audioPath: "delta-sleep-harbor.wav",
+    thumbnailPath: "delta-sleep-harbor.svg",
     imageGradient: "linear-gradient(135deg,#312e81,#38bdf8)",
+    narrator: "Lina Mercer",
+    tags: ["sleep", "rest", "soundscape"],
+    accessTier: "PREMIUM",
     description: "A slow sleep soundscape for easing rumination and inviting rest."
   },
   {
-    slug: "safe-room-reset",
-    title: "Safe Room Reset",
-    categorySlug: "ptsd-support",
-    duration: 960,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-    imageGradient: "linear-gradient(135deg,#4c1d95,#f472b6)",
-    description: "A trauma-informed orientation sequence focused on immediate safety cues."
-  },
-  {
-    slug: "clean-focus-current",
-    title: "Clean Focus Current",
-    categorySlug: "focus-sessions",
-    duration: 1500,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-    imageGradient: "linear-gradient(135deg,#075985,#67e8f9)",
-    description: "A steady background session for one focused work block."
-  },
-  {
-    slug: "vagus-nerve-reset",
-    title: "Vagus Nerve Reset",
-    categorySlug: "nervous-system-reset",
-    duration: 660,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-    imageGradient: "linear-gradient(135deg,#164e63,#5af3c7)",
-    description: "A short physiological reset for after conflict, overload, or urgency."
+    slug: "deep-blue-breathing",
+    title: "Deep Blue Breathing",
+    categorySlug: "anxiety-relief",
+    duration: 300,
+    audioPath: "deep-blue-breathing.wav",
+    thumbnailPath: "deep-blue-breathing.svg",
+    imageGradient: "linear-gradient(135deg,#2563eb,#06b6d4)",
+    narrator: "Ari Vale",
+    tags: ["anxiety", "breathwork", "grounding"],
+    accessTier: "PREMIUM",
+    description: "A paced breath session for lowering activation and returning to the present."
   },
   {
     slug: "box-breath-compass",
     title: "Box Breath Compass",
     categorySlug: "deep-breathing",
-    duration: 540,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+    duration: 240,
+    audioPath: "box-breath-compass.wav",
+    thumbnailPath: "box-breath-compass.svg",
     imageGradient: "linear-gradient(135deg,#1d4ed8,#8267ff)",
+    narrator: "Noah Wells",
+    tags: ["breathing", "regulation", "focus"],
+    accessTier: "PREMIUM",
     description: "A simple breath pattern to stabilize attention and emotional intensity."
+  },
+  {
+    slug: "clean-focus-current",
+    title: "Clean Focus Current",
+    categorySlug: "focus-sessions",
+    duration: 300,
+    audioPath: "clean-focus-current.wav",
+    thumbnailPath: "clean-focus-current.svg",
+    imageGradient: "linear-gradient(135deg,#075985,#67e8f9)",
+    narrator: "Mira Cole",
+    tags: ["focus", "productivity", "attention"],
+    accessTier: "PREMIUM",
+    description: "A steady background session for one focused work block."
   }
-];
+  ,
+  {
+    slug: "brain-heart-coherence",
+    title: "Brain-Heart Coherence",
+    categorySlug: "deep-breathing",
+    duration: 420,
+    audioPath: "brain-heart-coherence.wav",
+    thumbnailPath: "brain-heart-coherence.svg",
+    imageGradient: "linear-gradient(135deg,#6ee7b7,#60a5fa)",
+    narrator: "Dr. Aya Rao",
+    tags: ["coherence", "breathwork", "heart-rate-variability"],
+    accessTier: "PREMIUM",
+    description: "A guided coherence practice to gently synchronize breath and heart rhythm for nervous system balance."
+  }
+] as const;

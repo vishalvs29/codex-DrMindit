@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { EyeOff, Settings, ShieldAlert, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -45,7 +46,19 @@ export default function ProfilePage() {
           <GlassCard className="p-5">
             <Settings className="mb-4 h-6 w-6 text-cyanGlow" />
             <h3 className="font-semibold">Preferences</h3>
-            <p className="mt-2 text-sm text-slate-400">Tone: calm. Session memory: enabled. Audio focus: sleep.</p>
+            <p className="mt-2 text-sm text-slate-400">Tone: calm. Session memory: enabled. Session focus: sleep.</p>
+          </GlassCard>
+          <GlassCard className="p-5">
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="h-6 w-6 text-cyanGlow" />
+              <div>
+                <h3 className="font-semibold">Manage subscription</h3>
+                <p className="mt-2 text-sm text-slate-400">View plan details, billing, and premium access settings.</p>
+              </div>
+            </div>
+            <Link href="/billing" className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+              Open billing
+            </Link>
           </GlassCard>
           <GlassCard className="p-5">
             <ShieldAlert className="mb-4 h-6 w-6 text-roseGlow" />

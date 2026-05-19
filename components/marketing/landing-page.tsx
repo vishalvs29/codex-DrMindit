@@ -25,7 +25,7 @@ export function LandingPage() {
               </span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-              A premium mental health platform combining supportive AI chat, mood analytics, audio therapy, guided programs,
+              A premium mental health platform combining supportive AI chat, mood analytics, guided sessions, guided programs,
               emergency care flows, and privacy-first institutional insights.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -39,7 +39,7 @@ export function LandingPage() {
               </Link>
             </div>
             <div className="mt-9 grid max-w-xl grid-cols-3 gap-3 text-center">
-              {["82% calmer check-ins", "24/7 AI support", "HIPAA-ready architecture"].map((item) => (
+              { ["82% calmer check-ins", "24/7 AI support", "HIPAA-ready architecture"].map((item) => (
                 <GlassCard key={item} className="p-3 text-xs text-slate-300 sm:text-sm">
                   {item}
                 </GlassCard>
@@ -101,8 +101,8 @@ export function LandingPage() {
       <Section id="pricing">
         <div className="grid gap-4 lg:grid-cols-3">
           {[
-            ["Personal", "$19", "AI chat, mood tracking, audio therapy"],
-            ["Family", "$39", "Shared support plans and private member profiles"],
+            ["Personal", "₹1,599", "AI chat, mood tracking, audio therapy"],
+            ["Family", "₹3,499", "Shared support plans and private member profiles"],
             ["Institutional", "Custom", "Aggregated insights, onboarding, and reporting"]
           ].map(([name, price, body]) => (
             <GlassCard key={name} className="p-6">

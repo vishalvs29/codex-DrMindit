@@ -12,8 +12,9 @@ export type PlayerTrack = {
   title: string;
   description: string;
   duration: number;
-  audioUrl: string;
+  audioUrl?: string | null;
   imageGradient: string;
+  isLocked?: boolean;
   favorite?: boolean;
   userProgress?: {
     positionSeconds: number;
@@ -63,7 +64,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   );
 
   const persistProgress = useCallback(async (track: PlayerTrack, positionSeconds: number, completed = false, listeningSeconds = 0) => {
-    await fetch("/api/audio/progress", {
+    await fetch("/api/sessions/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -76,6 +77,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   function playTrack(track: PlayerTrack) {
+    if (track.isLocked) {
+      console.warn("Attempted to play a locked premium track. Upgrade is required.");
+      return;
+    }
+
     shouldAutoplayRef.current = true;
     setCurrentTrack(track);
     setPosition(track.userProgress?.completed ? 0 : track.userProgress?.positionSeconds ?? 0);
@@ -96,7 +102,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!audio || !currentTrack) return;
 
     const startPosition = currentTrack.userProgress?.completed ? 0 : currentTrack.userProgress?.positionSeconds ?? 0;
-    audio.src = currentTrack.audioUrl;
+    if (currentTrack.audioUrl) {
+      audio.src = currentTrack.audioUrl;
+    } else {
+      audio.removeAttribute("src");
+    }
     audio.currentTime = startPosition;
     lastPersistRef.current = startPosition;
 
@@ -137,7 +147,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           if (currentTrack) void persistProgress(currentTrack, currentTrack.duration, true, Math.max(1, currentTrack.duration - lastPersistRef.current));
           setIsPlaying(false);
         }}
-      />
+      >
+        <track kind="captions" src="" srcLang="en" label="English captions" />
+      </audio>
       {currentTrack && (
         <div className="fixed bottom-20 left-3 right-3 z-50 lg:bottom-4 lg:left-[19rem] lg:right-4">
           <GlassCard className="p-3">
@@ -146,9 +158,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
                 <Waves className={`h-6 w-6 ${isPlaying ? "animate-pulse" : ""}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <Link href={`/audio/${currentTrack.slug}`} className="truncate font-semibold hover:text-cyanGlow">
+                <Link href={`/sessions/${currentTrack.slug}`} className="truncate font-semibold hover:text-cyanGlow">
                   {currentTrack.title}
                 </Link>
+                <span className="sr-only" aria-live="polite">Now playing: {currentTrack.title}</span>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-gradient-to-r from-cyanGlow to-iris" style={{ width: `${percent}%` }} />
                 </div>
@@ -163,7 +176,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
               }}>
                 <SkipBack className="h-5 w-5" />
               </Button>
-              <Button size="icon" onClick={toggle}>
+              <Button size="icon" onClick={toggle} aria-pressed={isPlaying}>
                 {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
               </Button>
               <div className="hidden items-center gap-2 sm:flex">
@@ -193,7 +206,7 @@ export function FavoriteButton({ track }: { track: PlayerTrack }) {
   async function toggleFavorite() {
     const next = !favorite;
     setFavorite(next);
-    await fetch("/api/audio/favorite", {
+    await fetch("/api/sessions/favorite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ trackId: track.id, favorite: next })
