@@ -32,7 +32,7 @@ export function AudioLibrary({ categories, tracks, recentlyPlayed }: AudioLibrar
         <h2 className="mt-3 text-4xl font-semibold">Curated sessions for emotional and neurological wellbeing.</h2>
       </div>
       {recentlyPlayed.length > 0 && (
-        <GlassCard className="mb-4 p-5">
+        <GlassCard className="mb-4 p-5" role="region" aria-label="Continue listening">
           <h3 className="text-xl font-semibold">Continue listening</h3>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {recentlyPlayed.slice(0, 2).map((item) => (
@@ -40,6 +40,7 @@ export function AudioLibrary({ categories, tracks, recentlyPlayed }: AudioLibrar
                 key={item.id}
                 onClick={() => playTrack(item.audioTrack)}
                 className="flex items-center gap-3 rounded-2xl bg-white/5 p-3 text-left transition hover:bg-white/10"
+                aria-label={`Continue ${item.audioTrack.title}`}
               >
                 <span className="grid h-12 w-12 place-items-center rounded-2xl text-white" style={{ background: item.audioTrack.imageGradient }}>
                   <Play className="h-5 w-5" />
@@ -79,8 +80,8 @@ export function AudioLibrary({ categories, tracks, recentlyPlayed }: AudioLibrar
                 {categoryTracks.map((track, index) => (
                   <motion.div key={track.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
                     <GlassCard className="overflow-hidden">
-                      <Link href={`/sessions/${track.slug}`}>
-                        <div className="h-44 p-5" style={{ background: track.imageGradient }}>
+                      <Link href={`/sessions/${track.slug}`} aria-label={`Open session ${track.title}`}>
+                        <div className="h-44 p-5" style={{ background: track.imageGradient }} role="img" aria-hidden>
                           <span className="rounded-full bg-black/30 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/80">
                             {track.category.name}
                           </span>

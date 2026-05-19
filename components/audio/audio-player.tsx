@@ -117,6 +117,29 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [currentTrack]);
 
   useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!currentTrack) return;
+      if (e.code === "Space" && (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA")) {
+        e.preventDefault();
+        setIsPlaying((v) => !v);
+      }
+      if (e.code === "ArrowLeft") {
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.currentTime = Math.max(0, audio.currentTime - 10);
+      }
+      if (e.code === "ArrowRight") {
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.currentTime = Math.min(currentTrack.duration, audio.currentTime + 10);
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [currentTrack]);
+
+  useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
@@ -151,14 +174,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         <track kind="captions" src="" srcLang="en" label="English captions" />
       </audio>
       {currentTrack && (
-        <div className="fixed bottom-20 left-3 right-3 z-50 lg:bottom-4 lg:left-[19rem] lg:right-4">
+        <div role="region" aria-label="Media player" className="fixed bottom-20 left-3 right-3 z-50 lg:bottom-4 lg:left-[19rem] lg:right-4">
           <GlassCard className="p-3">
             <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-white" style={{ background: currentTrack.imageGradient }}>
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-white" style={{ background: currentTrack.imageGradient }} aria-hidden>
                 <Waves className={`h-6 w-6 ${isPlaying ? "animate-pulse" : ""}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <Link href={`/sessions/${currentTrack.slug}`} className="truncate font-semibold hover:text-cyanGlow">
+                <Link href={`/sessions/${currentTrack.slug}`} className="truncate font-semibold hover:text-cyanGlow" aria-label={`Open session ${currentTrack.title}`}>
                   {currentTrack.title}
                 </Link>
                 <span className="sr-only" aria-live="polite">Now playing: {currentTrack.title}</span>
@@ -173,10 +196,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
                 const audio = audioRef.current;
                 if (!audio) return;
                 audio.currentTime = Math.max(0, audio.currentTime - 15);
-              }}>
+              }} aria-label="Rewind 15 seconds" className="p-3 touch-manipulation">
                 <SkipBack className="h-5 w-5" />
               </Button>
-              <Button size="icon" onClick={toggle} aria-pressed={isPlaying}>
+              <Button size="icon" onClick={toggle} aria-pressed={isPlaying} aria-label={isPlaying ? "Pause" : "Play"} className="p-3 touch-manipulation">
                 {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
               </Button>
               <div className="hidden items-center gap-2 sm:flex">

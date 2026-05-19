@@ -23,17 +23,17 @@ export function AudioDetail({ track }: { track: PlayerTrack }) {
             <div className="mt-7 flex flex-wrap gap-3">
               {track.isLocked ? (
                 <Link href="/billing">
-                  <Button size="lg" variant="secondary">
+                  <Button size="lg" variant="secondary" aria-label="Upgrade to unlock">
                     Upgrade to unlock
                   </Button>
                 </Link>
               ) : (
-                <Button size="lg" onClick={() => playTrack(track)}>
+                <Button size="lg" onClick={() => playTrack(track)} aria-label={progress > 0 && percent < 98 ? "Continue session" : "Play session"}>
                   <Play className="h-5 w-5" /> {progress > 0 && percent < 98 ? "Continue" : "Play session"}
                 </Button>
               )}
               {track.slug === "brain-heart-coherence" && track.isLocked ? (
-                <div className="mt-4 rounded-lg border border-roseGlow/20 bg-roseGlow/5 p-3 text-sm text-roseGlow">
+                <div className="mt-4 rounded-lg border border-roseGlow/20 bg-roseGlow/5 p-3 text-sm text-roseGlow" role="status" aria-live="polite">
                   <p className="font-medium">Brain-Heart Coherence is a premium practice.</p>
                   <p className="mt-1">Unlock advanced coherence training with a Premium subscription.</p>
                 </div>
