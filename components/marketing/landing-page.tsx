@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Section } from "@/components/ui/section";
 import { featureCards, programs } from "@/lib/data";
+import { formatCurrency } from "@/lib/utils";
 
 export function LandingPage() {
   return (
@@ -101,13 +102,13 @@ export function LandingPage() {
       <Section id="pricing">
         <div className="grid gap-4 lg:grid-cols-3">
           {[
-            ["Personal", "₹1,599", "AI chat, mood tracking, audio therapy"],
-            ["Family", "₹3,499", "Shared support plans and private member profiles"],
+            ["Personal", 1599, "AI chat, mood tracking, audio therapy"],
+            ["Family", 3499, "Shared support plans and private member profiles"],
             ["Institutional", "Custom", "Aggregated insights, onboarding, and reporting"]
           ].map(([name, price, body]) => (
             <GlassCard key={name} className="p-6">
               <h3 className="text-xl font-semibold">{name}</h3>
-              <p className="mt-4 text-4xl font-semibold">{price}</p>
+              <p className="mt-4 text-4xl font-semibold">{typeof price === "number" ? formatCurrency(price) : price}</p>
               <p className="mt-3 min-h-12 text-sm text-slate-400">{body}</p>
               <div className="mt-6 space-y-3 text-sm text-slate-300">
                 {["Secure account", "Streaming AI support", "Personalized insights"].map((item) => (

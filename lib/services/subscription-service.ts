@@ -71,10 +71,38 @@ function resolvePlanPrice(plan: PlanSelection) {
   return price;
 }
 
+export function validateStripePriceIds() {
+  const premium = process.env.STRIPE_PREMIUM_PRICE_ID;
+  const org = process.env.STRIPE_ORGANIZATION_PRICE_ID;
+
+  const looksLikePriceId = (v?: string) => typeof v === "string" && /^price_/.test(v);
+
+  if (!looksLikePriceId(premium)) {
+    throw new ApiError("STRIPE_PREMIUM_PRICE_ID is not configured or invalid.", 503, "BILLING_NOT_CONFIGURED");
+  }
+
+  if (!looksLikePriceId(org)) {
+    // allow organization price to be optional in some deployments, but warn by throwing the same error
+    throw new ApiError("STRIPE_ORGANIZATION_PRICE_ID is not configured or invalid.", 503, "BILLING_NOT_CONFIGURED");
+  }
+
+  return true;
+}
+
+export function formatAmountCents(amountCents: number, currency = "INR") {
+  try {
+    const amount = amountCents / 100;
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+  } catch {
+    return `${currency} ${amountCents}`;
+  }
+}
+
 export async function createStripeCheckoutSession(
   user: { id: string; clerkId: string; email: string; name?: string | null },
   plan: PlanSelection = "premium"
 ) {
+  validateStripePriceIds();
   const stripe = getStripeClient();
   const customerId = await getOrCreateStripeCustomer(user);
   const priceId = resolvePlanPrice(plan);
