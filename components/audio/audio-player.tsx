@@ -185,23 +185,72 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
                   {currentTrack.title}
                 </Link>
                 <span className="sr-only" aria-live="polite">Now playing: {currentTrack.title}</span>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+
+                <div
+                  className="mt-2 h-2 overflow-hidden rounded-full bg-white/10 cursor-pointer"
+                  role="slider"
+                  tabIndex={0}
+                  aria-valuemin={0}
+                  aria-valuemax={currentTrack.duration}
+                  aria-valuenow={Math.floor(position)}
+                  aria-valuetext={`${formatTime(position)} of ${formatTime(currentTrack.duration)}`}
+                  aria-label="Playback position"
+                  onClick={(e) => {
+                    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                    const clickX = (e as React.MouseEvent).clientX - rect.left;
+                    const pct = Math.max(0, Math.min(1, clickX / rect.width));
+                    const audio = audioRef.current;
+                    if (audio && currentTrack) audio.currentTime = pct * currentTrack.duration;
+                  }}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    const audio = audioRef.current;
+                    if (!audio || !currentTrack) return;
+                    const step = Math.max(1, Math.floor(currentTrack.duration * 0.05));
+                    if (e.key === "ArrowLeft") {
+                      e.preventDefault();
+                      audio.currentTime = Math.max(0, audio.currentTime - step);
+                    } else if (e.key === "ArrowRight") {
+                      e.preventDefault();
+                      audio.currentTime = Math.min(currentTrack.duration, audio.currentTime + step);
+                    } else if (e.key === "Home") {
+                      e.preventDefault();
+                      audio.currentTime = 0;
+                    } else if (e.key === "End") {
+                      e.preventDefault();
+                      audio.currentTime = currentTrack.duration;
+                    }
+                  }}
+                >
                   <div className="h-full rounded-full bg-gradient-to-r from-cyanGlow to-iris" style={{ width: `${percent}%` }} />
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  {formatTime(position)} / {formatTime(currentTrack.duration)}
+
+                <p className="mt-1 text-xs text-slate-500 flex items-center gap-2">
+                  <span>{formatTime(position)}</span>
+                  <span aria-hidden>•</span>
+                  <span>Remaining {formatTime(Math.max(0, currentTrack.duration - Math.floor(position)))}</span>
                 </p>
               </div>
-              <Button size="icon" variant="secondary" onClick={() => {
-                const audio = audioRef.current;
-                if (!audio) return;
-                audio.currentTime = Math.max(0, audio.currentTime - 15);
-              }} aria-label="Rewind 15 seconds" className="p-3 touch-manipulation">
-                <SkipBack className="h-5 w-5" />
-              </Button>
-              <Button size="icon" onClick={toggle} aria-pressed={isPlaying} aria-label={isPlaying ? "Pause" : "Play"} className="p-3 touch-manipulation">
-                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-              </Button>
+              <div className="flex gap-2 items-center">
+                <Button size="icon" variant="secondary" onClick={() => {
+                  const audio = audioRef.current;
+                  if (!audio) return;
+                  audio.currentTime = Math.max(0, audio.currentTime - 15);
+                }} aria-label="Rewind 15 seconds" className="p-3 touch-manipulation">
+                  <SkipBack className="h-5 w-5" />
+                </Button>
+
+                <Button size="icon" onClick={toggle} aria-pressed={isPlaying} aria-label={isPlaying ? "Pause" : "Play"} className="p-3 touch-manipulation">
+                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                </Button>
+
+                <Button size="icon" variant="secondary" onClick={() => {
+                  const audio = audioRef.current;
+                  if (!audio || !currentTrack) return;
+                  audio.currentTime = Math.min(currentTrack.duration, audio.currentTime + 15);
+                }} aria-label="Forward 15 seconds" className="p-3 touch-manipulation">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 19V5l11 7-11 7z"/><path d="M19 19V5"/></svg>
+                </Button>
+              </div>
               <div className="hidden items-center gap-2 sm:flex">
                 <Volume2 className="h-4 w-4 text-slate-500" />
                 <input
