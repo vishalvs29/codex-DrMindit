@@ -81,6 +81,15 @@ export async function createChatCompletionStream({
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      // send periodic heartbeat pings to keep proxies and clients from timing out
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode("\n"));
+        } catch {
+          // ignore enqueue errors
+        }
+      }, 15_000);
+
       try {
         const completion = await openai.chat.completions.create({
           model: getOpenAIModel(),
@@ -111,13 +120,16 @@ export async function createChatCompletionStream({
           }
         });
       } catch (error) {
-        console.error(error);
-        controller.enqueue(
-          encoder.encode(
-            "I am having trouble connecting right now. If this is urgent or you may not be safe, please contact local emergency services or 988 in the United States now."
-          )
-        );
+        console.error("AI stream error:", error);
+        // Emit a structured error token so clients can detect stream-level failures
+        const payload = JSON.stringify({ code: "AI_STREAM_FAILED", message: "I am having trouble connecting right now." });
+        try {
+          controller.enqueue(encoder.encode(`__ERROR__:${payload}`));
+        } catch {
+          // ignore
+        }
       } finally {
+        clearInterval(heartbeat);
         controller.close();
       }
     }

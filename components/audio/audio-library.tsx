@@ -28,11 +28,11 @@ export function AudioLibrary({ categories, tracks, recentlyPlayed }: AudioLibrar
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
-        <p className="text-sm uppercase tracking-[0.24em] text-cyanGlow">Audio therapy</p>
-        <h2 className="mt-3 text-4xl font-semibold">Curated soundscapes for neurological wellbeing.</h2>
+        <p className="text-sm uppercase tracking-[0.24em] text-cyanGlow">Guided Sessions</p>
+        <h2 className="mt-3 text-4xl font-semibold">Curated sessions for emotional and neurological wellbeing.</h2>
       </div>
       {recentlyPlayed.length > 0 && (
-        <GlassCard className="mb-4 p-5">
+        <GlassCard className="mb-4 p-5" role="region" aria-label="Continue listening">
           <h3 className="text-xl font-semibold">Continue listening</h3>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {recentlyPlayed.slice(0, 2).map((item) => (
@@ -40,6 +40,7 @@ export function AudioLibrary({ categories, tracks, recentlyPlayed }: AudioLibrar
                 key={item.id}
                 onClick={() => playTrack(item.audioTrack)}
                 className="flex items-center gap-3 rounded-2xl bg-white/5 p-3 text-left transition hover:bg-white/10"
+                aria-label={`Continue ${item.audioTrack.title}`}
               >
                 <span className="grid h-12 w-12 place-items-center rounded-2xl text-white" style={{ background: item.audioTrack.imageGradient }}>
                   <Play className="h-5 w-5" />
@@ -79,8 +80,8 @@ export function AudioLibrary({ categories, tracks, recentlyPlayed }: AudioLibrar
                 {categoryTracks.map((track, index) => (
                   <motion.div key={track.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }}>
                     <GlassCard className="overflow-hidden">
-                      <Link href={`/audio/${track.slug}`}>
-                        <div className="h-44 p-5" style={{ background: track.imageGradient }}>
+                      <Link href={`/sessions/${track.slug}`} aria-label={`Open session ${track.title}`}>
+                        <div className="h-44 p-5" style={{ background: track.imageGradient }} role="img" aria-hidden>
                           <span className="rounded-full bg-black/30 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/80">
                             {track.category.name}
                           </span>
@@ -91,15 +92,36 @@ export function AudioLibrary({ categories, tracks, recentlyPlayed }: AudioLibrar
                           <div>
                             <h4 className="text-xl font-semibold">{track.title}</h4>
                             <p className="mt-2 text-sm text-slate-400">{formatMinutes(track.duration)} guided session</p>
+                            {track.isLocked && (
+                              <span className="mt-2 inline-flex rounded-full bg-roseGlow/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-roseGlow">
+                                Premium
+                              </span>
+                            )}
                           </div>
                           <FavoriteButton track={track} />
                         </div>
                         <p className="mt-3 min-h-12 text-sm leading-6 text-slate-500">{track.description}</p>
                         <div className="mt-5 flex gap-2">
-                          <Button className="flex-1" variant="secondary" onClick={() => playTrack(track)}>
-                            <Play className="h-4 w-4" /> Play
-                          </Button>
-                          <Link href={`/audio/${track.slug}`}>
+                          {track.isLocked ? (
+                            track.slug === "brain-heart-coherence" ? (
+                              <Link href="/billing" className="flex-1">
+                                <Button className="flex-1" variant="primary">
+                                  Unlock Brain-Heart Coherence — Premium
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Link href="/billing" className="flex-1">
+                                <Button className="flex-1" variant="secondary">
+                                  Upgrade to unlock
+                                </Button>
+                              </Link>
+                            )
+                          ) : (
+                            <Button className="flex-1" variant="secondary" onClick={() => playTrack(track)}>
+                              <Play className="h-4 w-4" /> Play
+                            </Button>
+                          )}
+                          <Link href={`/sessions/${track.slug}`}>
                             <Button size="icon" variant="secondary" aria-label="Open track">
                               <Star className="h-4 w-4" />
                             </Button>

@@ -1,13 +1,14 @@
 import { Prisma } from "@prisma/client";
-import { notFound } from "@/lib/api/errors";
+import { notFound, unauthorized } from "@/lib/api/errors";
 import { prisma } from "@/lib/prisma";
+import { isPremiumUser } from "@/lib/services/subscription-service";
 
 const trackInclude = {
   category: true
 } satisfies Prisma.AudioTrackInclude;
 
 export async function listAudioTracks(userId: string) {
-  const [categories, tracks, recent] = await Promise.all([
+  const [categories, tracks, recent, premiumAccess] = await Promise.all([
     prisma.audioCategory.findMany({ orderBy: { name: "asc" } }),
     prisma.audioTrack.findMany({
       where: { isPublished: true },
@@ -23,37 +24,50 @@ export async function listAudioTracks(userId: string) {
       include: { audioTrack: { include: { category: true } } },
       orderBy: { lastPlayedAt: "desc" },
       take: 6
-    })
+    }),
+    isPremiumUser(userId)
   ]);
 
   return {
     categories,
-    tracks: tracks.map((track) => ({
-      ...track,
-      userProgress: track.progress[0] ?? null,
-      favorite: track.favorites.length > 0
-    })),
+    tracks: tracks.map((track) => {
+      const isLocked = track.accessTier !== "FREE" && !premiumAccess;
+      return {
+        ...track,
+        isLocked,
+        audioUrl: isLocked ? null : track.audioUrl,
+        userProgress: track.progress[0] ?? null,
+        favorite: track.favorites.length > 0
+      };
+    }),
     recentlyPlayed: recent
   };
 }
 
 export async function getAudioTrack(userId: string, slugOrId: string) {
-  const track = await prisma.audioTrack.findFirst({
-    where: {
-      isPublished: true,
-      OR: [{ id: slugOrId }, { slug: slugOrId }]
-    },
-    include: {
-      ...trackInclude,
-      progress: { where: { userId }, take: 1 },
-      favorites: { where: { userId }, take: 1 }
-    }
-  });
+  const [track, premiumAccess] = await Promise.all([
+    prisma.audioTrack.findFirst({
+      where: {
+        isPublished: true,
+        OR: [{ id: slugOrId }, { slug: slugOrId }]
+      },
+      include: {
+        ...trackInclude,
+        progress: { where: { userId }, take: 1 },
+        favorites: { where: { userId }, take: 1 }
+      }
+    }),
+    isPremiumUser(userId)
+  ]);
 
   if (!track) throw notFound("Audio track not found.");
 
+  const isLocked = track.accessTier !== "FREE" && !premiumAccess;
+
   return {
     ...track,
+    isLocked,
+    audioUrl: isLocked ? null : track.audioUrl,
     userProgress: track.progress[0] ?? null,
     favorite: track.favorites.length > 0
   };
@@ -75,6 +89,10 @@ export async function updateAudioProgress({
   completed: boolean;
 }) {
   const track = await getAudioTrack(userId, trackId ?? slug ?? "");
+  if (track.isLocked) {
+    throw unauthorized("This audio track requires a premium subscription.");
+  }
+
   const boundedPosition = Math.min(positionSeconds, track.duration);
 
   const progress = await prisma.userAudioProgress.upsert({

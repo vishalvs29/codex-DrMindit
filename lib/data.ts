@@ -50,7 +50,7 @@ export const programs = [
     title: "Sleep Improvement",
     duration: "14 days",
     accent: "from-indigo-400 to-cyanGlow",
-    body: "Wind-down routines, audio sessions, and thought offloading for deeper rest."
+    body: "Wind-down routines, sessions, and thought offloading for deeper rest."
   },
   {
     title: "Focus Improvement",
@@ -72,7 +72,7 @@ export const navItems = [
   { href: "/dashboard", label: "Home", icon: HeartPulse },
   { href: "/chat", label: "Therapy", icon: Sparkles },
   { href: "/mood", label: "Mood", icon: Activity },
-  { href: "/audio", label: "Audio", icon: Moon },
+  { href: "/sessions", label: "Sessions", icon: Moon },
   { href: "/programs", label: "Programs", icon: CalendarHeart },
   { href: "/institutional", label: "Teams", icon: Building2 },
   { href: "/profile", label: "Profile", icon: Users }

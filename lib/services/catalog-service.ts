@@ -1,6 +1,10 @@
 import type { PrismaClient } from "@prisma/client";
 import { audioCategoryCatalog, audioTrackCatalog, programCatalog } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
+import {
+  resolveSessionAssetUrl,
+  resolveSessionThumbnailUrl
+} from "@/lib/audio-assets";
 
 export async function seedWellnessCatalog(client: PrismaClient = prisma) {
   for (const program of programCatalog) {
@@ -91,7 +95,12 @@ export async function seedWellnessCatalog(client: PrismaClient = prisma) {
         title: track.title,
         description: track.description,
         duration: track.duration,
-        audioUrl: track.audioUrl,
+        // prefer session-named helpers for new naming, remain backwards compatible
+        audioUrl: resolveSessionAssetUrl(track.audioPath),
+        thumbnailUrl: resolveSessionThumbnailUrl(track.thumbnailPath),
+        narrator: track.narrator,
+        tags: [...track.tags],
+        accessTier: track.accessTier,
         imageGradient: track.imageGradient
       },
       update: {
@@ -99,7 +108,11 @@ export async function seedWellnessCatalog(client: PrismaClient = prisma) {
         title: track.title,
         description: track.description,
         duration: track.duration,
-        audioUrl: track.audioUrl,
+        audioUrl: resolveSessionAssetUrl(track.audioPath),
+        thumbnailUrl: resolveSessionThumbnailUrl(track.thumbnailPath),
+        narrator: track.narrator,
+        tags: [...track.tags],
+        accessTier: track.accessTier,
         imageGradient: track.imageGradient,
         isPublished: true
       }

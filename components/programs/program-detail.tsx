@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Brain, CheckCircle2, ChevronDown, Headphones, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
-import { PlayerTrack, useAudioPlayer } from "@/components/audio/audio-player";
+import { PlayerTrack, useAudioPlayer } from "@/components/sessions/audio-player";
 
 type ProgramDetailData = {
   id: string;
@@ -53,6 +54,46 @@ export function ProgramDetail({
     () => Math.round((completedTaskIds.size / Math.max(1, program.totalTasks)) * 100),
     [completedTaskIds.size, program.totalTasks]
   );
+
+  const router = useRouter();
+
+  function findRecommendedSession(task: { title: string; description: string }) {
+    const taskText = `${task.title} ${task.description}`.toLowerCase();
+    const taskKeywords = taskText.split(/[^a-z0-9]+/).filter(Boolean);
+
+    const exactMatch = recommendedTracks.find((track) =>
+      track.title.toLowerCase().includes(task.title.toLowerCase()) ||
+      taskText.includes(track.category.name.toLowerCase())
+    );
+
+    if (exactMatch) return exactMatch;
+
+    const categoryMatch = recommendedTracks.find((track) =>
+      taskKeywords.some(
+        (keyword) =>
+          track.title.toLowerCase().includes(keyword) ||
+          track.category.name.toLowerCase().includes(keyword) ||
+          track.category.slug.toLowerCase().includes(keyword)
+      )
+    );
+
+    if (categoryMatch) return categoryMatch;
+
+    return recommendedTracks[0];
+  }
+
+  function handleTaskClick(task: { id: string; title: string; description: string; durationMinutes: number }) {
+    // mark progress locally and in background
+    toggleTask(task.id);
+
+    const match = findRecommendedSession(task);
+    if (match) {
+      void router.push(`/sessions/${match.slug}`);
+      return;
+    }
+
+    void router.push(`/sessions`);
+  }
 
   function toggleTask(taskId: string) {
     const nextCompleted = !completedTaskIds.has(taskId);
@@ -125,24 +166,37 @@ export function ProgramDetail({
                 {open && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="border-t border-white/10 p-5">
                     <div className="space-y-3">
-                      {day.tasks.map((task) => {
+                          {day.tasks.map((task) => {
                         const checked = completedTaskIds.has(task.id);
+                        const recommendation = findRecommendedSession(task);
                         return (
-                          <button
-                            key={task.id}
-                            disabled={isPending}
-                            onClick={() => toggleTask(task.id)}
-                            className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${
-                              checked ? "border-mint/50 bg-mint/10" : "border-white/10 bg-white/5 hover:border-cyanGlow/50"
-                            }`}
-                          >
-                            <CheckCircle2 className={`mt-1 h-5 w-5 ${checked ? "text-mint" : "text-slate-600"}`} />
-                            <span>
-                              <span className="block font-semibold">{task.title}</span>
-                              <span className="mt-1 block text-sm leading-6 text-slate-400">{task.description}</span>
-                              <span className="mt-2 block text-xs uppercase tracking-[0.18em] text-slate-600">{task.durationMinutes} min</span>
-                            </span>
-                          </button>
+                          <div key={task.id}>
+                            <button
+                              disabled={isPending}
+                              onClick={() => handleTaskClick(task)}
+                              className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                                checked ? "border-mint/50 bg-mint/10" : "border-white/10 bg-white/5 hover:border-cyanGlow/50"
+                              }`}
+                            >
+                              <CheckCircle2 className={`mt-1 h-5 w-5 ${checked ? "text-mint" : "text-slate-600"}`} />
+                              <span className="flex-1">
+                                <span className="block font-semibold">{task.title}</span>
+                                <span className="mt-1 block text-sm leading-6 text-slate-400">{task.description}</span>
+                                <span className="mt-2 block text-xs uppercase tracking-[0.18em] text-slate-600">{task.durationMinutes} min</span>
+                              </span>
+                            </button>
+                            {recommendation ? (
+                              <div className="mt-3 flex items-center justify-between rounded-2xl bg-white/5 p-3 text-xs text-slate-400">
+                                <div>
+                                  <p className="font-medium text-slate-100">Recommended session</p>
+                                  <p>{recommendation.title}</p>
+                                </div>
+                                <Button size="sm" variant="secondary" onClick={() => playTrack(recommendation)}>
+                                  Play session
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
                         );
                       })}
                     </div>
@@ -157,11 +211,11 @@ export function ProgramDetail({
             <Sparkles className="mb-4 h-6 w-6 text-cyanGlow" />
             <h3 className="font-semibold">AI wellness recommendation</h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              Pair this journey with one short audio session after completing a task. Your progress and recent mood check-ins will inform future DrMindit recommendations.
+              Pair this journey with one short session after completing a task. Your progress and recent mood check-ins will inform future DrMindit recommendations.
             </p>
           </GlassCard>
           <GlassCard className="p-5">
-            <h3 className="font-semibold">Recommended audio</h3>
+            <h3 className="font-semibold">Recommended sessions</h3>
             <div className="mt-4 space-y-3">
               {recommendedTracks.map((track) => (
                 <button key={track.id} onClick={() => playTrack(track)} className="flex w-full items-center gap-3 rounded-2xl bg-white/5 p-3 text-left hover:bg-white/10">

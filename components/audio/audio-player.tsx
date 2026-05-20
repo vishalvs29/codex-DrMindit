@@ -12,8 +12,9 @@ export type PlayerTrack = {
   title: string;
   description: string;
   duration: number;
-  audioUrl: string;
+  audioUrl?: string | null;
   imageGradient: string;
+  isLocked?: boolean;
   favorite?: boolean;
   userProgress?: {
     positionSeconds: number;
@@ -63,7 +64,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   );
 
   const persistProgress = useCallback(async (track: PlayerTrack, positionSeconds: number, completed = false, listeningSeconds = 0) => {
-    await fetch("/api/audio/progress", {
+    await fetch("/api/sessions/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -76,6 +77,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   function playTrack(track: PlayerTrack) {
+    if (track.isLocked) {
+      console.warn("Attempted to play a locked premium track. Upgrade is required.");
+      return;
+    }
+
     shouldAutoplayRef.current = true;
     setCurrentTrack(track);
     setPosition(track.userProgress?.completed ? 0 : track.userProgress?.positionSeconds ?? 0);
@@ -96,7 +102,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!audio || !currentTrack) return;
 
     const startPosition = currentTrack.userProgress?.completed ? 0 : currentTrack.userProgress?.positionSeconds ?? 0;
-    audio.src = currentTrack.audioUrl;
+    if (currentTrack.audioUrl) {
+      audio.src = currentTrack.audioUrl;
+    } else {
+      audio.removeAttribute("src");
+    }
     audio.currentTime = startPosition;
     lastPersistRef.current = startPosition;
 
@@ -104,6 +114,29 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       shouldAutoplayRef.current = false;
       void audio.play().catch(() => setIsPlaying(false));
     }
+  }, [currentTrack]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!currentTrack) return;
+      if (e.code === "Space" && (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA")) {
+        e.preventDefault();
+        setIsPlaying((v) => !v);
+      }
+      if (e.code === "ArrowLeft") {
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.currentTime = Math.max(0, audio.currentTime - 10);
+      }
+      if (e.code === "ArrowRight") {
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.currentTime = Math.min(currentTrack.duration, audio.currentTime + 10);
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [currentTrack]);
 
   useEffect(() => {
@@ -137,35 +170,87 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           if (currentTrack) void persistProgress(currentTrack, currentTrack.duration, true, Math.max(1, currentTrack.duration - lastPersistRef.current));
           setIsPlaying(false);
         }}
-      />
+      >
+        <track kind="captions" src="" srcLang="en" label="English captions" />
+      </audio>
       {currentTrack && (
-        <div className="fixed bottom-20 left-3 right-3 z-50 lg:bottom-4 lg:left-[19rem] lg:right-4">
+        <div role="region" aria-label="Media player" className="fixed bottom-20 left-3 right-3 z-50 lg:bottom-4 lg:left-[19rem] lg:right-4">
           <GlassCard className="p-3">
             <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-white" style={{ background: currentTrack.imageGradient }}>
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-white" style={{ background: currentTrack.imageGradient }} aria-hidden>
                 <Waves className={`h-6 w-6 ${isPlaying ? "animate-pulse" : ""}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <Link href={`/audio/${currentTrack.slug}`} className="truncate font-semibold hover:text-cyanGlow">
+                <Link href={`/sessions/${currentTrack.slug}`} className="truncate font-semibold hover:text-cyanGlow" aria-label={`Open session ${currentTrack.title}`}>
                   {currentTrack.title}
                 </Link>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                <span className="sr-only" aria-live="polite">Now playing: {currentTrack.title}</span>
+
+                <div
+                  className="mt-2 h-2 overflow-hidden rounded-full bg-white/10 cursor-pointer"
+                  role="slider"
+                  tabIndex={0}
+                  aria-valuemin={0}
+                  aria-valuemax={currentTrack.duration}
+                  aria-valuenow={Math.floor(position)}
+                  aria-valuetext={`${formatTime(position)} of ${formatTime(currentTrack.duration)}`}
+                  aria-label="Playback position"
+                  onClick={(e) => {
+                    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                    const clickX = (e as React.MouseEvent).clientX - rect.left;
+                    const pct = Math.max(0, Math.min(1, clickX / rect.width));
+                    const audio = audioRef.current;
+                    if (audio && currentTrack) audio.currentTime = pct * currentTrack.duration;
+                  }}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    const audio = audioRef.current;
+                    if (!audio || !currentTrack) return;
+                    const step = Math.max(1, Math.floor(currentTrack.duration * 0.05));
+                    if (e.key === "ArrowLeft") {
+                      e.preventDefault();
+                      audio.currentTime = Math.max(0, audio.currentTime - step);
+                    } else if (e.key === "ArrowRight") {
+                      e.preventDefault();
+                      audio.currentTime = Math.min(currentTrack.duration, audio.currentTime + step);
+                    } else if (e.key === "Home") {
+                      e.preventDefault();
+                      audio.currentTime = 0;
+                    } else if (e.key === "End") {
+                      e.preventDefault();
+                      audio.currentTime = currentTrack.duration;
+                    }
+                  }}
+                >
                   <div className="h-full rounded-full bg-gradient-to-r from-cyanGlow to-iris" style={{ width: `${percent}%` }} />
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  {formatTime(position)} / {formatTime(currentTrack.duration)}
+
+                <p className="mt-1 text-xs text-slate-500 flex items-center gap-2">
+                  <span>{formatTime(position)}</span>
+                  <span aria-hidden>•</span>
+                  <span>Remaining {formatTime(Math.max(0, currentTrack.duration - Math.floor(position)))}</span>
                 </p>
               </div>
-              <Button size="icon" variant="secondary" onClick={() => {
-                const audio = audioRef.current;
-                if (!audio) return;
-                audio.currentTime = Math.max(0, audio.currentTime - 15);
-              }}>
-                <SkipBack className="h-5 w-5" />
-              </Button>
-              <Button size="icon" onClick={toggle}>
-                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-              </Button>
+              <div className="flex gap-2 items-center">
+                <Button size="icon" variant="secondary" onClick={() => {
+                  const audio = audioRef.current;
+                  if (!audio) return;
+                  audio.currentTime = Math.max(0, audio.currentTime - 15);
+                }} aria-label="Rewind 15 seconds" className="p-3 touch-manipulation">
+                  <SkipBack className="h-5 w-5" />
+                </Button>
+
+                <Button size="icon" onClick={toggle} aria-pressed={isPlaying} aria-label={isPlaying ? "Pause" : "Play"} className="p-3 touch-manipulation">
+                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                </Button>
+
+                <Button size="icon" variant="secondary" onClick={() => {
+                  const audio = audioRef.current;
+                  if (!audio || !currentTrack) return;
+                  audio.currentTime = Math.min(currentTrack.duration, audio.currentTime + 15);
+                }} aria-label="Forward 15 seconds" className="p-3 touch-manipulation">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 19V5l11 7-11 7z"/><path d="M19 19V5"/></svg>
+                </Button>
+              </div>
               <div className="hidden items-center gap-2 sm:flex">
                 <Volume2 className="h-4 w-4 text-slate-500" />
                 <input
@@ -193,7 +278,7 @@ export function FavoriteButton({ track }: { track: PlayerTrack }) {
   async function toggleFavorite() {
     const next = !favorite;
     setFavorite(next);
-    await fetch("/api/audio/favorite", {
+    await fetch("/api/sessions/favorite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ trackId: track.id, favorite: next })
