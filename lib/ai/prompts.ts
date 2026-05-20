@@ -9,12 +9,32 @@ const crisisTerms = [
   "hurt someone",
   "overdose",
   "can't stay safe",
-  "cannot stay safe"
+  "cannot stay safe",
+  "i want to die",
+  "i don't want to live",
+  "i'm going to kill myself",
+  "i cant stay safe",
+  "not safe",
+  "abuse",
+  "rape"
 ];
 
 export function detectRiskLevel(input: string): RiskLevel {
   const normalized = input.toLowerCase();
   return crisisTerms.some((term) => normalized.includes(term)) ? "CRISIS" : "LOW";
+}
+
+export function detectCrisisSignal(input: string) {
+  return crisisTerms.some((term) => input.toLowerCase().includes(term));
+}
+
+export function buildCrisisResourceMessage() {
+  return (
+    "It sounds like you may be in serious danger. " +
+    "Please contact iCall India at 9152987821 or the Vandrevala Foundation at 1860-2662-345 right now. " +
+    "If you are outside India, contact your local emergency services or crisis hotline immediately. " +
+    "If possible, stay near another person and reduce access to immediate means of harm."
+  );
 }
 
 export function buildMoodContext(moodEntries: Pick<MoodEntry, "mood" | "score" | "stress" | "sleep" | "createdAt">[]) {
